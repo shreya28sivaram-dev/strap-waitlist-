@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# STRaP — waitlist landing page
 
-## Getting Started
+Single-page waitlist site. Built in Software Product Management, ISB.
 
-First, run the development server:
+Spec lives in `Claude.md`. The frozen design is `STRaP Waitlist standalone.html`
+(a self-unpacking bundle exported from Claude Design).
+
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The page works with no database configured: signups are logged to the server
+console and the API still returns success, so the full flow is testable locally.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create `.env.local` (already gitignored — never commit keys):
 
-## Learn More
+```
+NEXT_PUBLIC_POSTHOG_KEY=phc_xxx
+NEXT_PUBLIC_POSTHOG_HOST=https://us.i.posthog.com
+```
 
-To learn more about Next.js, take a look at the following resources:
+`DATABASE_URL` is injected by Vercel when the Postgres database is connected.
+Don't set it by hand in production and never hardcode it.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Data
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+One table, created automatically on the first API call:
 
-## Deploy on Vercel
+```sql
+waitlist_signups (id serial primary key, email text unique, created_at timestamp default now())
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Duplicate emails are treated as success, not as an error.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Analytics
+
+Three custom events, fired from the page:
+
+| Event | When |
+| --- | --- |
+| `waitlist_page_viewed` | on page load |
+| `waitlist_cta_clicked` | hero CTA clicked |
+| `waitlist_signup_completed` | API confirms a successful signup |
+
+These three form the funnel. Don't rename, merge, or add to them.
+
+## Deploy
+
+Push to GitHub, import the repo in Vercel, then:
+
+1. Add a Postgres database to the project (sets `DATABASE_URL` automatically)
+2. Add `NEXT_PUBLIC_POSTHOG_KEY` and `NEXT_PUBLIC_POSTHOG_HOST` as env vars
+3. Redeploy so the env vars are picked up
