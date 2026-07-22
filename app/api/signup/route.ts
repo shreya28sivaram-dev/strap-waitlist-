@@ -39,6 +39,8 @@ export async function POST(request: Request) {
       ok: true,
       alreadyOnList,
       position: devSignups.size,
+      // false means this signup was NOT written to a database.
+      persisted: false,
       message: alreadyOnList
         ? "You're already on the list."
         : "You're on the list.",
@@ -73,6 +75,7 @@ export async function POST(request: Request) {
       ok: true,
       alreadyOnList,
       position: Number(counted.rows[0].count),
+      persisted: true,
       message: alreadyOnList
         ? "You're already on the list."
         : "You're on the list.",
